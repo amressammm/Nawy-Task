@@ -43,7 +43,7 @@ export class QueryApartmentsDto {
 
   @ApiPropertyOptional({
     description: 'Results per page.',
-    default: 12,
+    default: 9,
     minimum: 1,
     maximum: 50,
     type: 'integer',
@@ -53,5 +53,6 @@ export class QueryApartmentsDto {
   @IsInt()
   @Min(1)
   @Max(50)
-  limit: number = 12;
+  // 9 fills the listing's three-column grid exactly.
+  limit: number = 9;
 }

@@ -1,6 +1,7 @@
 # Everything starts with a single command:  docker compose up --build
 #
 # Service reachability:
+#   - Host  -> frontend on http://localhost:3000
 #   - Host  -> backend on http://localhost:4000 (Swagger UI at /docs)
 #   - Inside the compose network, services address each other by name (db, backend).
 
@@ -13,9 +14,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-nawy}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nawy}
       POSTGRES_DB: ${POSTGRES_DB:-nawy_apartments}
-    ports:
-      # Exposed so you can inspect the DB from the host with psql / a GUI client.
-      - "${DB_PORT:-5432}:5432"
+    # Deliberately not published to the host. Nothing outside the compose
+    # network needs it, and binding 5432 would collide with any locally
+    # installed Postgres — breaking the one-command start on someone else's
+    # machine. To inspect the database, either
+    #   docker compose exec db psql -U nawy -d nawy_apartments
+    # or add a `ports:` mapping here.
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -52,6 +56,26 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+      start_period: 20s
+
+  frontend:
+    build: ./frontend
+    container_name: nawy-frontend
+    restart: unless-stopped
+    environment:
+      # Reachable only on the compose network — every API call is made by the
+      # Next server (during render or in a server action), never by the browser.
+      API_URL: http://backend:4000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
       start_period: 20s
 
 volumes:

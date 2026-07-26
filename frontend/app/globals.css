@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/*
+ * The design system for the whole app: a handful of tokens, defined once and
+ * used by every page. Tailwind v4 reads this block and generates the matching
+ * utilities (bg-surface, text-muted, rounded-card, ...).
+ */
+@theme {
+  --color-canvas: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-border: #e4e7ec;
+  --color-ink: #101828;
+  --color-muted: #667085;
+  --color-brand: #0f766e;
+  --color-brand-strong: #115e59;
+
+  --color-danger-border: #fecaca;
+  --color-danger-surface: #fef2f2;
+  --color-danger-ink: #991b1b;
+
+  --radius-card: 0.875rem;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06), 0 1px 3px rgb(16 24 40 / 0.1);
+  --shadow-card-hover: 0 4px 8px rgb(16 24 40 / 0.06), 0 12px 24px rgb(16 24 40 / 0.1);
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* One consistent focus ring everywhere, rather than per-component styling. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+@layer components {
+  /*
+   * The primary action, defined once. It appears in the header, the empty
+   * state, the 404, the error panel, and the create form — previously as five
+   * copies of the same class string that had already drifted apart.
+   */
+  .btn-primary {
+    @apply inline-block rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white
+      transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-60;
+  }
+}
