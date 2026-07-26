@@ -33,6 +33,28 @@ services:
       # socket during initdb; the grace period keeps that from counting.
       start_period: 10s
 
+  minio:
+    image: minio/minio:latest
+    container_name: nawy-minio
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-nawyminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-nawyminio}
+    volumes:
+      - minio-data:/data
+    # Like the database, deliberately not published to the host: apartment
+    # images are served through the app, so nothing outside the compose
+    # network needs to reach object storage directly.
+    healthcheck:
+      # 127.0.0.1 rather than localhost — inside the container localhost
+      # resolves to ::1 first, which nothing here is listening on.
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
   backend:
     build: ./backend
     container_name: nawy-backend
@@ -42,10 +64,17 @@ services:
       PORT: 4000
       # Inserts demo listings on first boot, only while the table is empty.
       SEED_ON_BOOT: "${SEED_ON_BOOT:-true}"
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-nawyminio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-nawyminio}
+      MINIO_BUCKET: ${MINIO_BUCKET:-apartment-images}
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     depends_on:
       db:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     healthcheck:
       # The frontend waits on this, so it must mean "API answering requests",
@@ -80,3 +109,4 @@ services:
 
 volumes:
   db-data:
+  minio-data:
