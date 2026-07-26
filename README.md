@@ -39,21 +39,28 @@ docker compose down -v  # stop and delete the data
 ## What's inside
 
 ```
-├── docker-compose.yml     three services, one command
+├── docker-compose.yml     four services, one command
 ├── backend/               NestJS + Prisma API
+│   └── seed-assets/       demo photos, uploaded to MinIO on first boot
 ├── frontend/              Next.js App Router UI
-└── scripts/smoke.sh       61 API checks, including the failure cases
+└── scripts/smoke.sh       79 API checks, including the failure cases
 ```
 
 ```
-Browser ──► Next.js (frontend:3000) ──► NestJS (backend:4000) ──► Postgres (db:5432)
+                                        ┌──► Postgres (db:5432)
+Browser ──► Next.js (frontend:3000) ──► NestJS (backend:4000)
+                                        └──► MinIO    (minio:9000)
 ```
 
-The browser only ever talks to the Next.js server. Pages fetch during render and
-the create form posts through a server action, so `http://backend:4000` — which
-only resolves inside the Docker network — is never referenced by client code.
-That removes CORS from the picture entirely and keeps one environment variable
+The browser only ever talks to the Next.js server. Pages fetch during render, the
+create form posts through a server action, and images come from `/media/<key>`,
+a route handler that streams from the API. So `http://backend:4000` — which only
+resolves inside the Docker network — is never referenced by client code. That
+removes CORS from the picture entirely and keeps one environment variable
 (`API_URL`) instead of a public and a private one.
+
+Neither Postgres nor MinIO is published to the host: nothing outside the compose
+network needs to reach them.
 
 ---
 
@@ -124,6 +131,23 @@ names every field at fault:
 Unknown fields are rejected rather than silently ignored. `imageUrl` is the only
 optional field.
 
+### `POST /uploads`
+
+Stores an apartment photo and returns the key to pass as `imageKey`.
+
+```bash
+curl -X POST http://localhost:4000/uploads -F 'file=@photo.jpg'
+# {"key":"a3f9c1e0-4b2d-4c7a-9f1e-2d3c4b5a6f70.jpg"}
+```
+
+JPEG, PNG, and WebP only, up to 5 MB. The type is decided by the file's leading
+bytes, not its `Content-Type` header or its name — `415` otherwise, `413` if it
+is too large.
+
+### `GET /uploads/:key`
+
+Streams the stored image back. `404` for an unknown or malformed key.
+
 ### `GET /health`
 
 Returns `{"status":"ok"}`, or `503` if the database is unreachable. This backs
@@ -143,7 +167,7 @@ would add joins without adding meaning.
 | `description`, `address` | text | |
 | `price` | integer | whole Egyptian pounds |
 | `bedrooms`, `bathrooms`, `area_sqm` | integer | |
-| `image_url` | text, nullable | |
+| `image_key` | text, nullable | object key in MinIO, not a URL |
 | `created_at` | timestamp | listing sort key |
 
 ---
@@ -176,14 +200,20 @@ Everything has a working default; `.env` is optional. See `.env.example`.
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `nawy` / `nawy` / `nawy_apartments` | Database credentials |
 | `BACKEND_PORT` / `FRONTEND_PORT` | `4000` / `3000` | Host ports, if those are taken |
 | `SEED_ON_BOOT` | `true` | Set to `false` to start with an empty database |
+| `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` | `nawyminio` / `nawyminio` | Object storage credentials |
+| `MINIO_BUCKET` | `apartment-images` | Bucket, created on first boot |
 
-The database port is deliberately **not** published to the host — nothing outside
-the compose network needs it, and binding 5432 would collide with a locally
-installed Postgres. To inspect it:
+The database and object storage ports are deliberately **not** published to the
+host — nothing outside the compose network needs them, and binding 5432 would
+collide with a locally installed Postgres. To look inside either:
 
 ```bash
 docker compose exec db psql -U nawy -d nawy_apartments
+docker compose exec minio ls /data/apartment-images
 ```
+
+Note that `docker compose down -v` now removes uploaded images along with the
+database, since both live in named volumes.
 
 ---
 
@@ -211,8 +241,27 @@ and skip them on another.
 **Search escapes LIKE metacharacters.** Prisma passes the term through verbatim,
 so an unescaped `%` would match every row.
 
-**Images are unoptimised.** They are already sized by the URL, and this means the
-container needs no outbound network access to serve the page.
+**Images live in MinIO, and the database stores a key rather than a URL.** A
+stored URL would bake today's hostname into every row. The 12 demo photos ship in
+`backend/seed-assets` and are uploaded on first boot, so the demo data travels
+the same path as a photo added through the form — and the app needs no internet
+access to render its own listing.
+
+**Uploads go through the API, and images are served through the app.** The
+tempting alternative is presigned URLs straight from the browser to MinIO, but a
+presigned URL is bound to a hostname: the backend reaches MinIO at `minio:9000`
+and the browser would reach it at `localhost:9000`, so a URL signed for one is
+rejected by the other. Proxying avoids that failure mode entirely, along with
+MinIO CORS configuration and a second published port.
+
+**An upload's type is decided by its leading bytes.** `Content-Type` is only ever
+a claim by the client. Since these files are served back from the app's own
+origin, an SVG that slipped through would be stored XSS — so the allowlist is
+three raster formats, keys are generated UUIDs rather than user filenames, and
+reads reject anything that is not a well-formed key.
+
+**Images are unoptimised.** The stored files are already sized for display, so
+Next's optimiser would only add work.
 
 ---
 
@@ -223,3 +272,9 @@ the code: authentication, image upload, editing or deleting apartments, unit
 tests beyond the smoke suite, caching, and rate limiting. The API also allows
 duplicate unit numbers within a project — real deduplication needs a product
 decision about what counts as a duplicate.
+
+Two known limits on uploads: an image is validated by its signature but never
+fully decoded, so a truncated file with a valid header is accepted and would
+render broken; and if creating the apartment fails after its photo uploaded, the
+object is left behind. Both are cheap to fix (an image library, a sweep job) and
+neither is worth the dependency at this size.
