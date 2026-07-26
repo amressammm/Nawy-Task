@@ -22,13 +22,10 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { NotFoundException } from '@nestjs/common';
-import { StorageService } from './storage.service';
+import { IMAGE_KEY_PATTERN, StorageService } from './storage.service';
 
 /** Refused before the file is ever buffered in memory. */
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-
-/** Object keys are UUID + extension; nothing else is a valid lookup. */
-const KEY_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp)$/;
 
 @ApiTags('uploads')
 @Controller('uploads')
@@ -70,7 +67,7 @@ export class UploadsController {
     @Param('key') key: string,
     @Res({ passthrough: true }) response: Response,
   ): Promise<StreamableFile> {
-    if (!KEY_PATTERN.test(key)) {
+    if (!IMAGE_KEY_PATTERN.test(key)) {
       throw new NotFoundException('No such image');
     }
 

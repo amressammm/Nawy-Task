@@ -20,7 +20,8 @@ const ALLOWED_TYPES = [
   },
 ] as const;
 
-export type StoredImage = { key: string; contentType: string };
+/** Object keys are a UUID plus one of the allowed extensions, and nothing else. */
+export const IMAGE_KEY_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp)$/;
 
 @Injectable()
 export class StorageService implements OnModuleInit {

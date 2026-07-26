@@ -24,7 +24,9 @@ model Apartment {
   bathrooms   Int
   areaSqm     Int      @map("area_sqm")
   address     String
-  imageUrl    String?  @map("image_url")
+  /// Object key in MinIO, e.g. "a3f9c1e0-....jpg". Not a URL: a stored URL
+  /// would bake today's hostname into every row.
+  imageKey    String?  @map("image_key")
   createdAt   DateTime @default(now()) @map("created_at")
 
   // Serves the default listing, which is ordered by newest first — the most

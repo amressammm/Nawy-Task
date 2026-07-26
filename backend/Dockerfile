@@ -25,6 +25,9 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/dist ./dist
 COPY prisma ./prisma
+# Demo images, uploaded to object storage on first boot. Resolved relative to
+# the compiled code at dist/, so this must sit beside it at /app.
+COPY seed-assets ./seed-assets
 
 EXPOSE 4000
 

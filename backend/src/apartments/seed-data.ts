@@ -1,10 +1,15 @@
 import { CreateApartmentDto } from './dto/create-apartment.dto';
 
 /**
- * Demo listings inserted on first boot so the app is usable immediately
- * after `docker compose up`. Every image URL was checked to return 200.
+ * A demo listing, paired with the image file that ships alongside it in
+ * `backend/seed-assets`. The seeder uploads the file and stores the resulting
+ * object key, so the demo data goes through exactly the same path as an
+ * apartment added through the form — and the app needs no internet access.
  */
-export const SEED_APARTMENTS: CreateApartmentDto[] = [
+export type SeedApartment = Omit<CreateApartmentDto, 'imageKey'> & { imageFile: string };
+
+/** Inserted on first boot so the app is usable immediately after `docker compose up`. */
+export const SEED_APARTMENTS: SeedApartment[] = [
   {
     unitName: 'Skyline Duplex',
     unitNumber: 'B4-1203',
@@ -16,7 +21,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 3,
     areaSqm: 245,
     address: 'Mivida, New Cairo, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
+    imageFile: '01.jpg',
   },
   {
     unitName: 'Garden Terrace',
@@ -29,7 +34,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 2,
     areaSqm: 178,
     address: 'Zed East, New Cairo, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
+    imageFile: '02.jpg',
   },
   {
     unitName: 'Park View Residence',
@@ -42,7 +47,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 3,
     areaSqm: 195,
     address: 'Palm Hills, 6th of October, Giza',
-    imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
+    imageFile: '03.jpg',
   },
   {
     unitName: 'The Loft',
@@ -55,7 +60,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 2,
     areaSqm: 142,
     address: 'Mountain View iCity, New Cairo, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=800&q=80',
+    imageFile: '04.jpg',
   },
   {
     unitName: 'Nile Breeze',
@@ -68,7 +73,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 3,
     areaSqm: 210,
     address: 'The Waterway, New Cairo, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+    imageFile: '05.jpg',
   },
   {
     unitName: 'Courtyard Flat',
@@ -81,7 +86,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 2,
     areaSqm: 128,
     address: 'Madinaty, New Cairo, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80',
+    imageFile: '06.jpg',
   },
   {
     unitName: 'Marina Penthouse',
@@ -94,7 +99,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 4,
     areaSqm: 320,
     address: 'Marassi, Sidi Abdel Rahman, North Coast',
-    imageUrl: 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80',
+    imageFile: '07.jpg',
   },
   {
     unitName: 'Studio One',
@@ -107,7 +112,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 1,
     areaSqm: 68,
     address: 'Al Burouj, Shorouk City, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    imageFile: '08.jpg',
   },
   {
     unitName: 'Olive Court',
@@ -120,7 +125,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 2,
     areaSqm: 172,
     address: 'Sodic East, New Heliopolis, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
+    imageFile: '09.jpg',
   },
   {
     unitName: 'Hyde Corner',
@@ -133,7 +138,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 3,
     areaSqm: 188,
     address: 'Hyde Park, New Cairo, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+    imageFile: '10.jpg',
   },
   {
     unitName: 'Cedar Heights',
@@ -146,7 +151,7 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 3,
     areaSqm: 268,
     address: 'Katameya Heights, New Cairo, Cairo',
-    imageUrl: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=800&q=80',
+    imageFile: '11.jpg',
   },
   {
     unitName: 'Badya Starter',
@@ -159,6 +164,6 @@ export const SEED_APARTMENTS: CreateApartmentDto[] = [
     bathrooms: 1,
     areaSqm: 110,
     address: 'Badya, 6th of October, Giza',
-    imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80',
+    imageFile: '12.jpg',
   },
 ];

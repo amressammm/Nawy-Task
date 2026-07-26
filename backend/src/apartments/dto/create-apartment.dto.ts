@@ -4,12 +4,13 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUrl,
+  Matches,
   Max,
   MaxLength,
   Min,
 } from 'class-validator';
 import { CleanString } from './clean-string.decorator';
+import { IMAGE_KEY_PATTERN } from '../../storage/storage.service';
 
 /**
  * Body for POST /apartments.
@@ -98,13 +99,12 @@ export class CreateApartmentDto {
   address: string;
 
   @ApiPropertyOptional({
-    example: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
+    description: 'Key returned by POST /uploads.',
+    example: 'a3f9c1e0-4b2d-4c7a-9f1e-2d3c4b5a6f70.jpg',
     type: 'string',
-    format: 'uri',
-    maxLength: 500,
   })
   @IsOptional()
-  @IsUrl()
-  @MaxLength(500)
-  imageUrl?: string;
+  @IsString()
+  @Matches(IMAGE_KEY_PATTERN, { message: 'imageKey must be a key returned by POST /uploads' })
+  imageKey?: string;
 }
