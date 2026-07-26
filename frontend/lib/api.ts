@@ -9,7 +9,7 @@ import type { Apartment, NewApartment, PaginatedApartments } from './types';
  * during render and the create form posts through a server action. It also
  * means no CORS configuration is involved anywhere.
  */
-const API_URL = process.env.API_URL ?? 'http://localhost:4000';
+export const API_URL = process.env.API_URL ?? 'http://localhost:4000';
 
 /** `no-store`: listings change as apartments are added, so never serve a cached page. */
 const FETCH_OPTIONS = { cache: 'no-store' } as const;
@@ -40,6 +40,39 @@ export async function getApartment(id: string): Promise<Apartment | null> {
     throw new Error(`Could not load apartment ${id} (HTTP ${response.status})`);
   }
   return response.json();
+}
+
+export type UploadResult = { ok: true; key: string } | { ok: false; error: string };
+
+/**
+ * Sends the chosen file to the API, which validates it and stores it in MinIO.
+ * The browser never uploads to object storage directly.
+ */
+export async function uploadImage(file: File): Promise<UploadResult> {
+  const body = new FormData();
+  body.append('file', file);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/uploads`, { method: 'POST', body, ...FETCH_OPTIONS });
+  } catch {
+    return { ok: false, error: 'Could not reach the apartments service to upload the image.' };
+  }
+
+  if (response.ok) {
+    return { ok: true, key: (await response.json()).key };
+  }
+
+  const failure = await response.json().catch(() => null);
+  return {
+    ok: false,
+    // 413 comes back from the size limiter with a terse body, so give it copy
+    // a person can act on.
+    error:
+      response.status === 413
+        ? 'That image is larger than 5 MB. Please choose a smaller file.'
+        : (failure?.message ?? 'The image could not be uploaded.'),
+  };
 }
 
 export type CreateResult =

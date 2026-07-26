@@ -51,9 +51,9 @@ export default async function ApartmentDetailsPage({ params }: Props) {
 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="relative aspect-[4/3] overflow-hidden rounded-card bg-surface lg:col-span-3">
-          {apartment.imageUrl ? (
+          {apartment.imageKey ? (
             <Image
-              src={apartment.imageUrl}
+              src={`/media/${apartment.imageKey}`}
               alt={`${apartment.unitName} in ${apartment.project}`}
               fill
               sizes="(min-width: 1024px) 40rem, 100vw"

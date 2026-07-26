@@ -5,11 +5,18 @@ const nextConfig: NextConfig = {
   // node_modules and stays small.
   output: 'standalone',
   images: {
-    remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com' }],
-    // The browser fetches these directly instead of routing them through the
-    // Next optimizer. The seed URLs are already sized (?w=800), and this way
-    // images do not depend on the container having outbound internet access.
+    // Images are same-origin (/media/<key>, proxied to object storage), so no
+    // remote hosts need allowing. Optimisation is off because the stored files
+    // are already sized for display.
     unoptimized: true,
+  },
+  experimental: {
+    serverActions: {
+      // The create form submits the photo through a server action, and the
+      // default cap is 1 MB — well under the 5 MB the API accepts, so a valid
+      // upload would be rejected before it ever reached the API.
+      bodySizeLimit: '6mb',
+    },
   },
 };
 

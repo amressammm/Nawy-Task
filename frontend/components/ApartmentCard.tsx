@@ -11,9 +11,9 @@ export function ApartmentCard({ apartment }: { apartment: Apartment }) {
       className="group flex w-full flex-col overflow-hidden rounded-card border border-border bg-surface shadow-card transition-shadow hover:shadow-card-hover"
     >
       <div className="relative aspect-[4/3] bg-canvas">
-        {apartment.imageUrl ? (
+        {apartment.imageKey ? (
           <Image
-            src={apartment.imageUrl}
+            src={`/media/${apartment.imageKey}`}
             alt={`${apartment.unitName} in ${apartment.project}`}
             fill
             sizes="(min-width: 1024px) 20rem, (min-width: 640px) 45vw, 100vw"

@@ -42,7 +42,7 @@ export function ApartmentForm() {
   const kept = (field: string) => state.values[field] ?? '';
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form action={formAction} encType="multipart/form-data" className="flex flex-col gap-5">
       {state.errors.length > 0 && (
         <div
           role="alert"
@@ -156,14 +156,17 @@ export function ApartmentForm() {
         </Field>
       </div>
 
-      <Field label="Image URL" name="imageUrl" hint="Optional. Leave empty to use no photo.">
+      <Field
+        label="Photo"
+        name="image"
+        hint="Optional. JPEG, PNG, or WebP, up to 5 MB."
+      >
         <input
-          id="imageUrl"
-          name="imageUrl"
-          defaultValue={kept('imageUrl')}
-          type="url"
-          maxLength={500}
-          className={inputStyle}
+          id="image"
+          name="image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="w-full rounded-lg border border-border bg-surface p-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-brand-strong"
         />
       </Field>
 

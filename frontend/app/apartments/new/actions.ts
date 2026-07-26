@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { createApartment } from '@/lib/api';
+import { createApartment, uploadImage } from '@/lib/api';
 
 /**
  * `values` echoes what was submitted so the form can repopulate itself.
@@ -10,6 +10,18 @@ import { createApartment } from '@/lib/api';
  * otherwise wipe every field the moment one of them fails validation.
  */
 export type FormState = { errors: string[]; values: Record<string, string> };
+
+/**
+ * The text fields, echoed back so a rejected form keeps what was typed.
+ * Files are skipped: a browser will not let a file input be pre-filled, so the
+ * user does have to pick the photo again.
+ */
+const keptValues = (data: FormData): Record<string, string> =>
+  Object.fromEntries(
+    Array.from(data.entries())
+      .filter(([, value]) => typeof value === 'string')
+      .map(([field, value]) => [field, String(value)]),
+  );
 
 /** Empty optional fields are omitted rather than sent as "" or NaN. */
 const text = (data: FormData, field: string): string => String(data.get(field) ?? '').trim();
@@ -28,6 +40,20 @@ export async function createApartmentAction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  // The photo is stored first, because creating the apartment needs the key it
+  // returns. An upload with no apartment behind it is a stray object; an
+  // apartment pointing at a key that was never stored would be a broken image.
+  const file = formData.get('image');
+  let imageKey: string | undefined;
+
+  if (file instanceof File && file.size > 0) {
+    const upload = await uploadImage(file);
+    if (!upload.ok) {
+      return { errors: [upload.error], values: keptValues(formData) };
+    }
+    imageKey = upload.key;
+  }
+
   const result = await createApartment({
     unitName: text(formData, 'unitName'),
     unitNumber: text(formData, 'unitNumber'),
@@ -38,14 +64,11 @@ export async function createApartmentAction(
     bedrooms: number(formData, 'bedrooms'),
     bathrooms: number(formData, 'bathrooms'),
     areaSqm: number(formData, 'areaSqm'),
-    imageUrl: text(formData, 'imageUrl') || undefined,
+    imageKey,
   });
 
   if (!result.ok) {
-    const values = Object.fromEntries(
-      Array.from(formData.entries(), ([field, value]) => [field, String(value)]),
-    );
-    return { errors: result.errors, values };
+    return { errors: result.errors, values: keptValues(formData) };
   }
 
   // The new apartment must appear on a listing that is otherwise uncached.

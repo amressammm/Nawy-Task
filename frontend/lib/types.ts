@@ -11,7 +11,8 @@ export interface Apartment {
   bathrooms: number;
   areaSqm: number;
   address: string;
-  imageUrl: string | null;
+  /** Object key; render it from /media/<key>. */
+  imageKey: string | null;
   createdAt: string;
 }
 
@@ -35,5 +36,5 @@ export interface NewApartment {
   bathrooms?: number;
   areaSqm?: number;
   address: string;
-  imageUrl?: string;
+  imageKey?: string;
 }
