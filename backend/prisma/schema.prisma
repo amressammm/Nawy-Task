@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// A single apartment unit offered for sale.
+model Apartment {
+  id          Int      @id @default(autoincrement())
+  /// Marketing name of the unit, e.g. "Sky Loft Duplex".
+  unitName    String   @map("unit_name")
+  /// Unit reference within its project, e.g. "B4-1203".
+  unitNumber  String   @map("unit_number")
+  /// Compound / development the unit belongs to, e.g. "Mivida".
+  project     String
+  description String
+  /// Whole Egyptian pounds. Stored as an integer to keep JSON responses
+  /// free of decimal-string quirks; apartment prices are never fractional.
+  price       Int
+  bedrooms    Int
+  bathrooms   Int
+  areaSqm     Int      @map("area_sqm")
+  address     String
+  imageUrl    String?  @map("image_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Serves the default listing, which is ordered by newest first — the most
+  // frequent query by far, and the only one an index can actually help here.
+  //
+  // Deliberately no indexes on the three searchable columns: search is a
+  // case-insensitive "contains", i.e. ILIKE '%term%', and a leading wildcard
+  // cannot use a B-tree index. They would cost writes and buy no reads. At a
+  // scale where the sequential scan hurts, the answer is a pg_trgm GIN index
+  // (or full-text search), not a B-tree.
+  @@index([createdAt])
+  @@map("apartments")
+}

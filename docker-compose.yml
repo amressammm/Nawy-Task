@@ -1,0 +1,58 @@
+# Everything starts with a single command:  docker compose up --build
+#
+# Service reachability:
+#   - Host  -> backend on http://localhost:4000 (Swagger UI at /docs)
+#   - Inside the compose network, services address each other by name (db, backend).
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nawy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nawy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nawy}
+      POSTGRES_DB: ${POSTGRES_DB:-nawy_apartments}
+    ports:
+      # Exposed so you can inspect the DB from the host with psql / a GUI client.
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # The backend waits on this before running migrations, so it must report
+      # ready only once Postgres actually accepts connections to our database.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nawy} -d ${POSTGRES_DB:-nawy_apartments}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      # On a cold volume Postgres briefly accepts connections on a temporary
+      # socket during initdb; the grace period keeps that from counting.
+      start_period: 10s
+
+  backend:
+    build: ./backend
+    container_name: nawy-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-nawy}:${POSTGRES_PASSWORD:-nawy}@db:5432/${POSTGRES_DB:-nawy_apartments}
+      PORT: 4000
+      # Inserts demo listings on first boot, only while the table is empty.
+      SEED_ON_BOOT: "${SEED_ON_BOOT:-true}"
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # The frontend waits on this, so it must mean "API answering requests",
+      # not merely "container started".
+      # 127.0.0.1, not localhost: inside the container localhost resolves to ::1
+      # first, while Nest listens on IPv4 only, which fails the check forever.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  db-data:
