@@ -16,3 +16,7 @@ npm-debug.log*
 
 # os
 .DS_Store
+
+# local tooling
+scripts/
+.claude/

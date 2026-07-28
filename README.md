@@ -42,8 +42,7 @@ docker compose down -v  # stop and delete the data
 ├── docker-compose.yml     four services, one command
 ├── backend/               NestJS + Prisma API
 │   └── seed-assets/       demo photos, uploaded to MinIO on first boot
-├── frontend/              Next.js App Router UI
-└── scripts/smoke.sh       79 API checks, including the failure cases
+└── frontend/              Next.js App Router UI
 ```
 
 ```
@@ -174,15 +173,13 @@ would add joins without adding meaning.
 
 ## Testing
 
-```bash
-./scripts/smoke.sh
-```
-
-61 checks against a running API: every endpoint, plus the cases that are easy to
-get wrong — LIKE wildcards in the search term, NUL bytes, ids beyond int4 range,
-pagination bounds, unknown query parameters, and nine flavours of invalid POST
-body. It asserts *exclusion* as well as inclusion, so a search that quietly
-returned everything would fail rather than pass.
+Every endpoint was exercised against a running stack, along with the cases that
+are easy to get wrong — LIKE wildcards in the search term, NUL bytes, ids beyond
+int4 range, pagination bounds, unknown query parameters, nine flavours of
+invalid POST body, and uploads that lie about their type (a text file renamed
+`.jpg`, an SVG, a file over the 5 MB cap). Exclusion was checked as well as
+inclusion, so a search that quietly returned everything would fail rather than
+pass.
 
 The frontend was verified in a real browser (Playwright) at 1440×900 and
 375×667: no horizontal overflow at either width, images load, keyboard focus is
@@ -268,8 +265,8 @@ Next's optimiser would only add work.
 ## Not included
 
 Deliberately out of scope for the assignment, and each would change the shape of
-the code: authentication, image upload, editing or deleting apartments, unit
-tests beyond the smoke suite, caching, and rate limiting. The API also allows
+the code: authentication, editing or deleting apartments, automated unit tests,
+caching, and rate limiting. The API also allows
 duplicate unit numbers within a project — real deduplication needs a product
 decision about what counts as a duplicate.
 
