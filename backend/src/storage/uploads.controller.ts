@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { NotFoundException } from '@nestjs/common';
+import { detectImageType } from './image-type';
 import { IMAGE_KEY_PATTERN, StorageService } from './storage.service';
 
 /** Refused before the file is ever buffered in memory. */
@@ -50,7 +51,7 @@ export class UploadsController {
       throw new BadRequestException('A file is required.');
     }
 
-    const type = this.storage.detectType(file.buffer);
+    const type = detectImageType(file.buffer);
     if (!type) {
       throw new UnsupportedMediaTypeException(
         'Only JPEG, PNG, and WebP images are accepted.',

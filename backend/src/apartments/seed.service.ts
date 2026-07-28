@@ -2,6 +2,7 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
+import { detectImageType } from '../storage/image-type';
 import { StorageService } from '../storage/storage.service';
 import { SEED_APARTMENTS, SeedApartment } from './seed-data';
 
@@ -51,7 +52,7 @@ export class SeedService implements OnApplicationBootstrap {
   private async withUploadedImage({ imageFile, ...apartment }: SeedApartment) {
     try {
       const file = await readFile(join(SEED_ASSETS_DIR, imageFile));
-      const type = this.storage.detectType(file);
+      const type = detectImageType(file);
 
       if (!type) {
         throw new Error(`${imageFile} is not a supported image`);

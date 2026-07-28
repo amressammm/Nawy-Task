@@ -2,26 +2,19 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { Client } from 'minio';
+import { ALLOWED_TYPES } from './image-type';
 
-/** Image types accepted for upload, and the bytes each one actually starts with. */
-const ALLOWED_TYPES = [
-  { mime: 'image/jpeg', extension: 'jpg', matches: (b: Buffer) => b[0] === 0xff && b[1] === 0xd8 },
-  {
-    mime: 'image/png',
-    extension: 'png',
-    matches: (b: Buffer) => b.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex')),
-  },
-  {
-    mime: 'image/webp',
-    extension: 'webp',
-    matches: (b: Buffer) =>
-      b.subarray(0, 4).toString('ascii') === 'RIFF' &&
-      b.subarray(8, 12).toString('ascii') === 'WEBP',
-  },
-] as const;
-
-/** Object keys are a UUID plus one of the allowed extensions, and nothing else. */
-export const IMAGE_KEY_PATTERN = /^[0-9a-f-]{36}\.(jpg|png|webp)$/;
+/**
+ * Object keys are a UUID plus one of the allowed extensions, and nothing else —
+ * the format `put()` below mints, which is why the two live together.
+ *
+ * The alternation is built from the allowlist rather than written out, so a
+ * format added there cannot be left out here — which would make every upload of
+ * the new type unreadable.
+ */
+export const IMAGE_KEY_PATTERN = new RegExp(
+  `^[0-9a-f-]{36}\\.(${ALLOWED_TYPES.map((type) => type.extension).join('|')})$`,
+);
 
 @Injectable()
 export class StorageService implements OnModuleInit {
@@ -44,17 +37,6 @@ export class StorageService implements OnModuleInit {
 
     await this.client.makeBucket(this.bucket);
     this.logger.log(`Created bucket "${this.bucket}".`);
-  }
-
-  /**
-   * Identifies an image by its leading bytes rather than its declared
-   * Content-Type, which is only ever a claim by the client. These files are
-   * served back from the app's own origin, so an SVG that slipped through
-   * would be stored XSS — hence an allowlist of three raster formats and no
-   * reliance on the filename or the header.
-   */
-  detectType(buffer: Buffer): (typeof ALLOWED_TYPES)[number] | undefined {
-    return ALLOWED_TYPES.find((type) => type.matches(buffer));
   }
 
   async put(buffer: Buffer, contentType: string, extension: string): Promise<string> {
