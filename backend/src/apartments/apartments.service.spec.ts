@@ -16,8 +16,8 @@ describe('ApartmentsService.findAll', () => {
   let service: ApartmentsService;
   // Typed by their argument, so the assertions below read the real shape
   // instead of poking at `any`.
-  let findMany: jest.Mock<string, [Prisma.ApartmentFindManyArgs]>;
-  let count: jest.Mock<string, [Prisma.ApartmentCountArgs]>;
+  let findMany: jest.Mock<Promise<unknown[]>, [Prisma.ApartmentFindManyArgs]>;
+  let count: jest.Mock<Promise<number>, [Prisma.ApartmentCountArgs]>;
 
   /** Mirrors the defaults the DTO applies, so a test states only what it varies. */
   const query = (overrides: Partial<QueryApartmentsDto> = {}): QueryApartmentsDto => ({
@@ -30,17 +30,10 @@ describe('ApartmentsService.findAll', () => {
   const whereSentToFindMany = (): Prisma.ApartmentWhereInput => findMany.mock.calls[0][0].where!;
 
   beforeEach(() => {
-    findMany = jest.fn<string, [Prisma.ApartmentFindManyArgs]>().mockReturnValue('findMany-op');
-    count = jest.fn<string, [Prisma.ApartmentCountArgs]>().mockReturnValue('count-op');
+    findMany = jest.fn<Promise<unknown[]>, [Prisma.ApartmentFindManyArgs]>().mockResolvedValue([]);
+    count = jest.fn<Promise<number>, [Prisma.ApartmentCountArgs]>().mockResolvedValue(0);
 
-    const prisma = {
-      apartment: { findMany, count },
-      // The real client defers the operations and runs them together; the
-      // tuple it resolves to is all this service cares about.
-      $transaction: jest.fn().mockResolvedValue([[], 0]),
-    } as unknown as PrismaService;
-
-    service = new ApartmentsService(prisma);
+    service = new ApartmentsService({ apartment: { findMany, count } } as unknown as PrismaService);
   });
 
   describe('search term', () => {
@@ -127,12 +120,9 @@ describe('ApartmentsService.findAll', () => {
       [18, 9, 2],
       [19, 9, 3],
     ])('reports %i results at limit %i as %i page(s)', async (total, limit, totalPages) => {
-      const prisma = {
-        apartment: { findMany, count },
-        $transaction: jest.fn().mockResolvedValue([[], total]),
-      } as unknown as PrismaService;
+      count.mockResolvedValue(total);
 
-      const result = await new ApartmentsService(prisma).findAll(query({ limit }));
+      const result = await service.findAll(query({ limit }));
       expect(result.totalPages).toBe(totalPages);
     });
 
