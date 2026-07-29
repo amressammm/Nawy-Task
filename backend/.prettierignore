@@ -6,3 +6,4 @@ dist/
 prisma/migrations/
 package-lock.json
 *.md
+coverage/

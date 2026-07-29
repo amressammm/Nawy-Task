@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ApartmentsService } from './apartments.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateApartmentDto } from './dto/create-apartment.dto';
 import { QueryApartmentsDto } from './dto/query-apartments.dto';
 
 /**
@@ -146,5 +147,22 @@ describe('ApartmentsService.findOne', () => {
 
   it('throws 404 rather than returning null', async () => {
     await expect(serviceWith(null).findOne(999)).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+describe('ApartmentsService.create', () => {
+  it('stores the validated dto as-is and returns the created row', async () => {
+    const created = { id: 7, unitName: 'Skyline Duplex' };
+    const create = jest.fn().mockResolvedValue(created);
+    const service = new ApartmentsService({
+      apartment: { create },
+    } as unknown as PrismaService);
+
+    const dto = { unitName: 'Skyline Duplex', price: 7_500_000 } as CreateApartmentDto;
+
+    await expect(service.create(dto)).resolves.toBe(created);
+    // Passed straight through: the DTO has already rejected anything the
+    // column cannot hold, so re-shaping it here could only lose a field.
+    expect(create).toHaveBeenCalledWith({ data: dto });
   });
 });

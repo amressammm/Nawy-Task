@@ -174,28 +174,38 @@ would add joins without adding meaning.
 ## Testing
 
 ```bash
-cd backend  && npm ci && npm test   # 94 tests
-cd frontend && npm ci && npm test   # 33 tests
+cd backend  && npm ci && npm test   # 142 tests, 100% coverage
+cd frontend && npm ci && npm test   #  33 tests
 ```
 
 No containers needed — these are unit tests, and nothing in them touches
-Postgres or MinIO. What they cover is the logic that *decides* something, where
-a mistake is invisible against twelve seeded rows in a browser:
+Postgres or MinIO. Every controller and service has a spec beside it; the
+external clients (Prisma, MinIO, the filesystem) are mocked, so what is being
+tested is the decision each unit makes, not the driver underneath it:
 
 | Under test | The mistake it catches |
 |---|---|
 | `searchFilter` | An unescaped `%` in the term, which turns a search into "match everything" |
 | `detectImageType` | An SVG or a renamed text file passing as an image — this one is stored XSS, not a cosmetic bug |
+| `UploadsController` | A malformed or traversing key reaching object storage at all |
 | `parseApartmentId` | `Number()` quietly accepting `0x2`, `1e3`, or an id past int4 range |
 | `CreateApartmentDto` | A price sent as `"7500000"`, a blank-but-whitespace name, an unknown field |
 | `QueryApartmentsDto` | Pagination bounds, and defaults drifting from what the docs claim |
+| `SeedService` | Seeding twice, or seeding over a database that already holds real listings |
+| `HealthController` | Reporting healthy while the database is unreachable, which would release the frontend against a broken API |
 | `parseListingParams` | A hand-edited URL reaching the API as a 400 and blanking the page |
 
-The suites were checked by mutation rather than by their own green tick:
-deliberately removing the LIKE escaping, breaking the `skip` arithmetic,
-loosening the WebP signature check, and dropping the page clamp each made tests
-fail (9 and 8 respectively). A suite that passes when the code is wrong is
-worse than no suite.
+Backend coverage is 100% of statements, branches, functions, and lines
+(`npm run test:cov`). That is a floor, not the argument — coverage says the line
+ran, not that a wrong answer would have been noticed.
+
+The suites were checked by mutation rather than by their own green tick. Each of
+these was introduced deliberately, and each made tests fail: removing the LIKE
+escaping, breaking the `skip` arithmetic, loosening the WebP signature check,
+dropping the upload key validation, making the health check return a literal,
+letting the seed run over a populated table, reusing one storage key for every
+upload, and dropping the page clamp. A suite that passes when the code is wrong
+is worse than no suite.
 
 Beyond that, every endpoint was exercised against a running stack — NUL bytes,
 uploads that lie about their type, a file over the 5 MB cap — and the frontend
