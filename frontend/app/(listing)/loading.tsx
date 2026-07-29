@@ -6,10 +6,7 @@ export default function Loading() {
       <div className="h-11 w-full animate-pulse rounded-lg bg-border" />
       <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }, (_, index) => (
-          <li
-            key={index}
-            className="overflow-hidden rounded-card border border-border bg-surface"
-          >
+          <li key={index} className="overflow-hidden rounded-card border border-border bg-surface">
             <div className="aspect-[4/3] animate-pulse bg-border" />
             <div className="flex flex-col gap-3 p-4">
               <div className="h-4 w-2/3 animate-pulse rounded bg-border" />

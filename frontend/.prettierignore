@@ -1,0 +1,7 @@
+# See the note in backend/.prettierignore: the ignore file is per-package,
+# the .prettierrc at the repo root is shared.
+node_modules/
+.next/
+next-env.d.ts
+package-lock.json
+*.md

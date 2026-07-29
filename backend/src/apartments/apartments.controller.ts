@@ -71,7 +71,9 @@ export class ApartmentsController {
   @Post()
   @ApiOperation({ summary: 'Add an apartment' })
   @ApiCreatedResponse({ type: ApartmentEntity })
-  @ApiBadRequestResponse({ description: 'Validation failed; the response lists the offending fields.' })
+  @ApiBadRequestResponse({
+    description: 'Validation failed; the response lists the offending fields.',
+  })
   create(@Body() dto: CreateApartmentDto): Promise<ApartmentEntity> {
     return this.apartments.create(dto);
   }

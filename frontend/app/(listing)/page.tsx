@@ -20,13 +20,13 @@ export default async function ListingPage({
   try {
     result = await listApartments({ search: term, page });
 
-  // A page past the end — a stale bookmark, or a search that shrank the result
-  // set — would otherwise show "no apartments" beside a non-zero total. Fall
-  // back to the last real page.
-  //
-  // Clamped with a second fetch rather than redirect(): the loading skeleton
-  // starts streaming the response before a server component can set a 307, so
-  // redirect() here would only work for clients running JavaScript.
+    // A page past the end — a stale bookmark, or a search that shrank the result
+    // set — would otherwise show "no apartments" beside a non-zero total. Fall
+    // back to the last real page.
+    //
+    // Clamped with a second fetch rather than redirect(): the loading skeleton
+    // starts streaming the response before a server component can set a 307, so
+    // redirect() here would only work for clients running JavaScript.
     if (result.total > 0 && page > result.totalPages) {
       result = await listApartments({ search: term, page: result.totalPages });
     }

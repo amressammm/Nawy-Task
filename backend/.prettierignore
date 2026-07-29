@@ -1,0 +1,8 @@
+# Prettier resolves .prettierignore from the working directory rather than
+# walking up, so each package keeps its own. The shared .prettierrc at the
+# repo root *is* found by walking up, and holds the settings for both.
+node_modules/
+dist/
+prisma/migrations/
+package-lock.json
+*.md

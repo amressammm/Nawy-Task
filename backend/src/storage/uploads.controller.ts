@@ -53,9 +53,7 @@ export class UploadsController {
 
     const type = detectImageType(file.buffer);
     if (!type) {
-      throw new UnsupportedMediaTypeException(
-        'Only JPEG, PNG, and WebP images are accepted.',
-      );
+      throw new UnsupportedMediaTypeException('Only JPEG, PNG, and WebP images are accepted.');
     }
 
     return { key: await this.storage.put(file.buffer, type.mime, type.extension) };

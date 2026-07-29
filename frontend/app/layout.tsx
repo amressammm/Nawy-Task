@@ -16,10 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="text-lg font-semibold tracking-tight">
               Nawy<span className="text-brand"> Apartments</span>
             </Link>
-            <Link
-              href="/apartments/new"
-              className="btn-primary"
-            >
+            <Link href="/apartments/new" className="btn-primary">
               Add apartment
             </Link>
           </div>

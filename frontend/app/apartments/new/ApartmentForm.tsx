@@ -156,11 +156,7 @@ export function ApartmentForm() {
         </Field>
       </div>
 
-      <Field
-        label="Photo"
-        name="image"
-        hint="Optional. JPEG, PNG, or WebP, up to 5 MB."
-      >
+      <Field label="Photo" name="image" hint="Optional. JPEG, PNG, or WebP, up to 5 MB.">
         <input
           id="image"
           name="image"
@@ -182,11 +178,7 @@ export function ApartmentForm() {
         />
       </Field>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="btn-primary self-start"
-      >
+      <button type="submit" disabled={isPending} className="btn-primary self-start">
         {isPending ? 'Adding…' : 'Add apartment'}
       </button>
     </form>

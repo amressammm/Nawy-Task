@@ -16,8 +16,7 @@ const MAX_PAGE = 10_000;
  */
 export class QueryApartmentsDto {
   @ApiPropertyOptional({
-    description:
-      'Case-insensitive partial match against unit name, unit number, or project.',
+    description: 'Case-insensitive partial match against unit name, unit number, or project.',
     example: 'mivida',
     maxLength: 100,
   })

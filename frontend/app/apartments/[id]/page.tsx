@@ -68,7 +68,9 @@ export default async function ApartmentDetailsPage({ params }: Props) {
         <div className="flex flex-col gap-5 lg:col-span-2">
           <div>
             <p className="text-sm font-medium text-brand">{apartment.project}</p>
-            <h1 className="mt-1 break-words text-2xl font-semibold tracking-tight">{apartment.unitName}</h1>
+            <h1 className="mt-1 break-words text-2xl font-semibold tracking-tight">
+              {apartment.unitName}
+            </h1>
             <p className="mt-2 text-sm text-muted">{apartment.address}</p>
           </div>
 
@@ -87,7 +89,9 @@ export default async function ApartmentDetailsPage({ params }: Props) {
 
       <section className="rounded-card border border-border bg-surface p-5 sm:p-6">
         <h2 className="font-semibold">About this unit</h2>
-        <p className="mt-3 whitespace-pre-line break-words leading-relaxed text-muted">{apartment.description}</p>
+        <p className="mt-3 whitespace-pre-line break-words leading-relaxed text-muted">
+          {apartment.description}
+        </p>
       </section>
     </article>
   );

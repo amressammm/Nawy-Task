@@ -75,9 +75,7 @@ export async function uploadImage(file: File): Promise<UploadResult> {
   };
 }
 
-export type CreateResult =
-  | { ok: true; apartment: Apartment }
-  | { ok: false; errors: string[] };
+export type CreateResult = { ok: true; apartment: Apartment } | { ok: false; errors: string[] };
 
 /**
  * Creates an apartment, surfacing the API's per-field validation messages
