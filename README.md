@@ -3,8 +3,6 @@
 A small apartment listing application: browse apartments, search them, open a
 unit to see its details, and add new ones.
 
-Built for the Nawy engineering assignment.
-
 ---
 
 ## Running it
@@ -293,19 +291,3 @@ reads reject anything that is not a well-formed key.
 
 **Images are unoptimised.** The stored files are already sized for display, so
 Next's optimiser would only add work.
-
----
-
-## Not included
-
-Deliberately out of scope for the assignment, and each would change the shape of
-the code: authentication, editing or deleting apartments, end-to-end tests,
-caching, and rate limiting. The API also allows
-duplicate unit numbers within a project — real deduplication needs a product
-decision about what counts as a duplicate.
-
-Two known limits on uploads: an image is validated by its signature but never
-fully decoded, so a truncated file with a valid header is accepted and would
-render broken; and if creating the apartment fails after its photo uploaded, the
-object is left behind. Both are cheap to fix (an image library, a sweep job) and
-neither is worth the dependency at this size.
