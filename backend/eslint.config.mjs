@@ -15,7 +15,9 @@ import prettier from 'eslint-config-prettier';
  * `eslint-config-prettier` comes last to switch off anything that overlaps.
  */
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'eslint.config.mjs'] },
+  // Config files sit outside tsconfig's `include`, so the type-aware rules
+  // have no program to check them against.
+  { ignores: ['dist/**', 'node_modules/**', 'eslint.config.mjs', 'jest.config.js'] },
 
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

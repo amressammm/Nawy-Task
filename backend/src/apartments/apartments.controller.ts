@@ -28,7 +28,7 @@ const MAX_INT4 = 2_147_483_647;
  * The upper bound matters — an id past int4 range reaches Postgres and fails
  * there as a 500 instead of a clean 4xx.
  */
-function parseApartmentId(raw: string): number {
+export function parseApartmentId(raw: string): number {
   if (!/^\d+$/.test(raw)) {
     throw new BadRequestException('id must be a positive integer');
   }
