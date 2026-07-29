@@ -14,20 +14,26 @@ export class ApartmentsService {
   async findAll({ search, page, limit }: QueryApartmentsDto): Promise<PaginatedApartmentsDto> {
     const where = this.searchFilter(search);
 
-    // One round trip for both the page and the total, so they can never
-    // disagree because of a concurrent insert between two separate queries.
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.apartment.findMany({
-        where,
-        // `id` breaks ties: createdAt alone is not unique (the seed inserts
-        // every row in one statement, so all 12 share a timestamp), and
-        // OFFSET over a non-unique sort key can repeat or skip rows entirely.
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      this.prisma.apartment.count({ where }),
-    ]);
+    // The page and the total, from one snapshot, so a concurrent insert
+    // cannot leave them disagreeing. The isolation level is what buys that:
+    // under Postgres' default of READ COMMITTED each statement re-reads, so
+    // `BEGIN`/`COMMIT` alone is not enough. Read-only, so it cannot serialize
+    // and fail.
+    const [data, total] = await this.prisma.$transaction(
+      [
+        this.prisma.apartment.findMany({
+          where,
+          // `id` breaks ties: createdAt alone is not unique (the seed inserts
+          // every row in one statement, so all 12 share a timestamp), and
+          // OFFSET over a non-unique sort key can repeat or skip rows entirely.
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        this.prisma.apartment.count({ where }),
+      ],
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
 
     return { data, total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) };
   }
