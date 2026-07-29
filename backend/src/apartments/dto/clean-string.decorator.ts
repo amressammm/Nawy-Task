@@ -10,6 +10,6 @@ import { Transform } from 'class-transformer';
  *    a search into a 500 rather than a normal empty result.
  */
 export const CleanString = (): PropertyDecorator =>
-  Transform(({ value }) =>
+  Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.replace(/\0/g, '').trim() : value,
   );

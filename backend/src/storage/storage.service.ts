@@ -58,9 +58,14 @@ export class StorageService implements OnModuleInit {
   async stat(key: string): Promise<{ size: number; contentType: string } | null> {
     try {
       const info = await this.client.statObject(this.bucket, key);
+
+      // MinIO types object metadata as `any`, and this value is echoed back as
+      // a response header — so check the type rather than only nullishness.
+      const declared: unknown = info.metaData?.['content-type'];
+
       return {
         size: info.size,
-        contentType: info.metaData?.['content-type'] ?? 'application/octet-stream',
+        contentType: typeof declared === 'string' ? declared : 'application/octet-stream',
       };
     } catch {
       return null;
