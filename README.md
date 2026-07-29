@@ -116,7 +116,7 @@ curl -X POST http://localhost:4000/apartments \
     "bathrooms": 2,
     "areaSqm": 185,
     "address": "Mivida, New Cairo, Cairo",
-    "imageUrl": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80"
+    "imageKey": "a3f9c1e0-4b2d-4c7a-9f1e-2d3c4b5a6f70.jpg"
   }'
 ```
 
@@ -127,8 +127,10 @@ names every field at fault:
 { "statusCode": 400, "message": ["price must be an integer number"], "error": "Bad Request" }
 ```
 
-Unknown fields are rejected rather than silently ignored. `imageUrl` is the only
-optional field.
+Unknown fields are rejected rather than silently ignored. `imageKey` is the only
+optional field, and it is not a URL — upload the photo first with
+[`POST /uploads`](#post-uploads) and pass back the key it returns. Omit it and
+the apartment renders with a placeholder.
 
 ### `POST /uploads`
 
