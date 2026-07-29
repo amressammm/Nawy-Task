@@ -175,18 +175,50 @@ would add joins without adding meaning.
 
 ## Testing
 
-Every endpoint was exercised against a running stack, along with the cases that
-are easy to get wrong — LIKE wildcards in the search term, NUL bytes, ids beyond
-int4 range, pagination bounds, unknown query parameters, nine flavours of
-invalid POST body, and uploads that lie about their type (a text file renamed
-`.jpg`, an SVG, a file over the 5 MB cap). Exclusion was checked as well as
-inclusion, so a search that quietly returned everything would fail rather than
-pass.
+```bash
+cd backend  && npm ci && npm test   # 94 tests
+cd frontend && npm ci && npm test   # 33 tests
+```
 
-The frontend was verified in a real browser (Playwright) at 1440×900 and
-375×667: no horizontal overflow at either width, images load, keyboard focus is
-visible, and the create flow round-trips from an empty form to a populated
-details page.
+No containers needed — these are unit tests, and nothing in them touches
+Postgres or MinIO. What they cover is the logic that *decides* something, where
+a mistake is invisible against twelve seeded rows in a browser:
+
+| Under test | The mistake it catches |
+|---|---|
+| `searchFilter` | An unescaped `%` in the term, which turns a search into "match everything" |
+| `detectImageType` | An SVG or a renamed text file passing as an image — this one is stored XSS, not a cosmetic bug |
+| `parseApartmentId` | `Number()` quietly accepting `0x2`, `1e3`, or an id past int4 range |
+| `CreateApartmentDto` | A price sent as `"7500000"`, a blank-but-whitespace name, an unknown field |
+| `QueryApartmentsDto` | Pagination bounds, and defaults drifting from what the docs claim |
+| `parseListingParams` | A hand-edited URL reaching the API as a 400 and blanking the page |
+
+The suites were checked by mutation rather than by their own green tick:
+deliberately removing the LIKE escaping, breaking the `skip` arithmetic,
+loosening the WebP signature check, and dropping the page clamp each made tests
+fail (9 and 8 respectively). A suite that passes when the code is wrong is
+worse than no suite.
+
+Beyond that, every endpoint was exercised against a running stack — NUL bytes,
+uploads that lie about their type, a file over the 5 MB cap — and the frontend
+was verified in a real browser at 1440×900 and 375×667: no horizontal overflow
+at either width, images load, keyboard focus is visible, and the create flow
+round-trips from an empty form to a populated details page.
+
+Both packages also carry ESLint and Prettier, and both are clean:
+
+```bash
+npm run lint          # eslint
+npm run format:check  # prettier
+```
+
+Prettier owns formatting and ESLint owns correctness, with
+`eslint-config-prettier` switching off the rules that would otherwise overlap.
+The backend lints with type information, which is the only way to get
+`no-floating-promises` — an un-awaited promise in a Nest lifecycle hook fails
+silently and nothing else reports it. Settings live in one `.prettierrc` at the
+root; the ignore files are per-package, because Prettier looks for
+`.prettierignore` in the working directory rather than walking up.
 
 ---
 
@@ -267,7 +299,7 @@ Next's optimiser would only add work.
 ## Not included
 
 Deliberately out of scope for the assignment, and each would change the shape of
-the code: authentication, editing or deleting apartments, automated unit tests,
+the code: authentication, editing or deleting apartments, end-to-end tests,
 caching, and rate limiting. The API also allows
 duplicate unit numbers within a project — real deduplication needs a product
 decision about what counts as a duplicate.
